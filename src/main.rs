@@ -10,6 +10,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let app = Router::new()
         .route("/ws/init", get(livescript::init_broadcast))
+        .route("/ws/subscribe", get(livescript::subscribe_to_broadcast))
         .with_state(ApplicationState::init().await);
 
     let listener = TcpListener::bind("127.0.0.1:8000").await?;

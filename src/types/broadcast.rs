@@ -20,7 +20,7 @@ pub struct Broadcast {
 }
 
 impl Broadcast {
-    pub fn new(initial_subscriber: SocketAddr) -> Self {
+    fn new(initial_subscriber: SocketAddr) -> Self {
         let mut broadcast = Self {
             id: Uuid::new_v4(),
             subs: HashSet::new(),
@@ -28,6 +28,18 @@ impl Broadcast {
         };
         broadcast.subs.insert(initial_subscriber);
         broadcast
+    }
+
+    async fn verify_live(state: &Arc<ApplicationState>, broadcast_id: &String) -> bool {
+        let broadcasts = state.live_broadcasts.lock().await;
+        if Uuid::parse_str(broadcast_id.as_str()).is_err() {
+            return false;
+        }
+
+        if !broadcasts.contains_key(&Uuid::parse_str(broadcast_id.as_str()).unwrap()) {
+            return false;
+        }
+        true
     }
 
     pub async fn init(socket: WebSocket, who: SocketAddr, state: Arc<ApplicationState>) {
@@ -77,5 +89,42 @@ impl Broadcast {
         };
 
         println!("Websocket context {who} destroyed");
+    }
+
+    pub async fn subscribe(socket: WebSocket, who: SocketAddr, state: Arc<ApplicationState>) {
+        let (mut client_sender, mut client_receiver) = socket.split();
+        let mut broadcast_id = String::new();
+
+        // Verify broadcast is live with given id
+        while let Some(Ok(message)) = client_receiver.next().await {
+            if let Message::Text(id) = message {
+                if !Self::verify_live(&state, &id).await {
+                    let _ = client_sender
+                        .send(Message::Text(String::from("Broadcast doesn't exist!")))
+                        .await;
+                    return;
+                }
+                broadcast_id.push_str(&id);
+                break;
+            }
+        }
+
+        // Subscribe client to live broadcast
+        let mut live_broadcasts = state.live_broadcasts.lock().await;
+        let broadcast = live_broadcasts
+            .get_mut(&Uuid::parse_str(broadcast_id.as_str()).unwrap())
+            .unwrap();
+        let mut receiver = broadcast.transmitter.subscribe();
+        broadcast.subs.insert(who);
+
+        // Receive messages from Broadcast and send message to client
+        tokio::spawn(async move {
+            while let Ok(msg) = receiver.recv().await {
+                // Break loop for any websocket error
+                if client_sender.send(Message::Text(msg)).await.is_err() {
+                    break;
+                }
+            }
+        });
     }
 }
