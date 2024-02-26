@@ -9,6 +9,10 @@ use super::application_state::ApplicationState;
 
 #[allow(non_snake_case, non_upper_case_globals)]
 mod BroadcastCommands {
+    pub const HardWrap: &str = "hard wrap";
+    pub const Wrap: &str = "wrap";
+    pub const ThitySeconds: &str = "thirty seconds";
+    pub const OneMinute: &str = "one minute";
     pub const End: &str = "end";
 }
 
@@ -73,11 +77,23 @@ impl Broadcast {
 
         let mut recv_task = tokio::spawn(async move {
             while let Some(Ok(Message::Text(msg))) = client_receiver.next().await {
-                let _ = transmitter.send(format!("Message received: {msg}").into());
-
                 match msg.to_lowercase().as_str() {
+                    BroadcastCommands::HardWrap => {
+                        let _ = transmitter.send(format!("{msg}"));
+                    }
+                    BroadcastCommands::Wrap => {
+                        let _ = transmitter.send(format!("{msg}"));
+                    }
+                    BroadcastCommands::ThitySeconds => {
+                        let _ = transmitter.send(format!("{msg}"));
+                    }
+                    BroadcastCommands::OneMinute => {
+                        let _ = transmitter.send(format!("{msg}"));
+                    }
                     BroadcastCommands::End => break,
-                    _ => {}
+                    _ => {
+                        let _ = transmitter.send(format!("Invalid message"));
+                    }
                 }
             }
         });
