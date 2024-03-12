@@ -1,6 +1,6 @@
 use std::{error::Error, net::SocketAddr};
 
-use axum::{routing::get, Router};
+use axum::{routing::{get, post}, Router};
 use livescript::{self, ApplicationState};
 use tokio::net::TcpListener;
 
@@ -9,8 +9,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
     livescript::welcome();
 
     let app = Router::new()
-        .route("/ws/init", get(livescript::init_broadcast))
-        .route("/ws/subscribe", get(livescript::subscribe_to_broadcast))
+        .route("/auth/register", post(livescript::register_user))
+        .route("/broadcast/init", get(livescript::init_broadcast))
+        .route("/broadcast/subscribe", get(livescript::subscribe_to_broadcast))
         .with_state(ApplicationState::init().await);
 
     let listener = TcpListener::bind("127.0.0.1:8000").await?;
