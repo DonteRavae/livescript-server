@@ -34,13 +34,13 @@ impl Broadcast {
         broadcast
     }
 
-    async fn verify_live(state: &Arc<ApplicationState>, broadcast_id: &String) -> bool {
+    async fn verify_live(state: &Arc<ApplicationState>, broadcast_id: &str) -> bool {
         let broadcasts = state.live_broadcasts.lock().await;
-        if Uuid::parse_str(broadcast_id.as_str()).is_err() {
+        if Uuid::parse_str(broadcast_id).is_err() {
             return false;
         }
 
-        if !broadcasts.contains_key(&Uuid::parse_str(broadcast_id.as_str()).unwrap()) {
+        if !broadcasts.contains_key(&Uuid::parse_str(broadcast_id).unwrap()) {
             return false;
         }
         true
@@ -56,7 +56,7 @@ impl Broadcast {
         {
             // Add new broadcast to table of live broadcasts then alert client
             let mut broadcasts = state.live_broadcasts.lock().await;
-            broadcasts.insert(broadcast.id.clone(), broadcast.clone());
+            broadcasts.insert(broadcast.id, broadcast.clone());
             let _ = broadcast
                 .transmitter
                 .send(format!("Broadcast {} started. {who} joined.", broadcast.id));
@@ -79,20 +79,20 @@ impl Broadcast {
             while let Some(Ok(Message::Text(msg))) = client_receiver.next().await {
                 match msg.to_lowercase().as_str() {
                     BroadcastCommands::HardWrap => {
-                        let _ = transmitter.send(format!("{msg}"));
+                        let _ = transmitter.send(msg.to_string());
                     }
                     BroadcastCommands::Wrap => {
-                        let _ = transmitter.send(format!("{msg}"));
+                        let _ = transmitter.send(msg.to_string());
                     }
                     BroadcastCommands::ThitySeconds => {
-                        let _ = transmitter.send(format!("{msg}"));
+                        let _ = transmitter.send(msg.to_string());
                     }
                     BroadcastCommands::OneMinute => {
-                        let _ = transmitter.send(format!("{msg}"));
+                        let _ = transmitter.send(msg.to_string());
                     }
                     BroadcastCommands::End => break,
                     _ => {
-                        let _ = transmitter.send(format!("Invalid message"));
+                        let _ = transmitter.send("Invalid message".to_string());
                     }
                 }
             }

@@ -12,7 +12,7 @@ use uuid::Uuid;
 pub struct Team {
     pub id: Uuid,
     pub name: String,
-    members: Vec<Uuid>,
+    _members: Vec<Uuid>,
 }
 
 #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
@@ -21,13 +21,11 @@ pub struct Auth {
     pub team: Option<Uuid>,
     pub email: String,
     pub hash: String,
-    pub role: String,
-    pub verified: bool,
     pub refresh_token: String,
 }
 
 impl Auth {
-    pub fn new(request: UserRegistrationRequest) -> Self {
+    pub fn new(request: UserRegistrationRequest) -> (Self, String) {
         let argon2 = Argon2::default();
         let salt = SaltString::generate(&mut OsRng);
 
@@ -42,16 +40,16 @@ impl Auth {
             email: request.email,
             hash,
             refresh_token: String::new(),
-            verified: false,
-            role: String::new(),
         };
 
         auth.refresh_token = JwtManager::new_refresh_token(&auth.id.to_string()).unwrap();
+        let access_token = JwtManager::new_access_token(&auth.id.to_string())
+            .expect("error creating access token");
 
-        auth
+        (auth, access_token)
     }
 
-    pub fn new_with_team(request: UserRegistrationRequest) -> Self {
+    pub fn new_with_team(request: UserRegistrationRequest) -> (Self, String) {
         let argon2 = Argon2::default();
         let salt = SaltString::generate(&mut OsRng);
 
@@ -66,13 +64,13 @@ impl Auth {
             email: request.email,
             hash,
             refresh_token: String::new(),
-            verified: false,
-            role: String::new(),
         };
 
         auth.refresh_token = JwtManager::new_refresh_token(&auth.refresh_token).unwrap();
+        let access_token = JwtManager::new_access_token(&auth.id.to_string())
+            .expect("error creating access token");
 
-        auth
+        (auth, access_token)
     }
 
     pub fn verify_password(password: &[u8], hash: &str) -> bool {
