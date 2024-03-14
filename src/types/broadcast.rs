@@ -9,11 +9,17 @@ use super::application_state::ApplicationState;
 
 #[allow(non_snake_case, non_upper_case_globals)]
 mod BroadcastCommands {
-    pub const HardWrap: &str = "hard wrap";
-    pub const Wrap: &str = "wrap";
-    pub const ThitySeconds: &str = "thirty seconds";
-    pub const OneMinute: &str = "one minute";
-    pub const End: &str = "end";
+    pub const ScrollSpeed1: &str = "scroll:speed_1";
+    pub const ScrollSpeed2: &str = "scroll:speed_2";
+    pub const ScrollSpeed3: &str = "scroll:speed_3";
+    pub const ScrollSpeed4: &str = "scroll:speed_4";
+    pub const ScrollSpeed5: &str = "scroll:speed_5";
+    pub const Scroll: &str = "scroll";
+    pub const OneMinute: &str = "timing:one_minute";
+    pub const ThirtySeconds: &str = "timing:thirty_seconds";
+    pub const Wrap: &str = "timing:wrap";
+    pub const HardWrap: &str = "timing:hard_wrap";
+    pub const End: &str = "state:end";
 }
 
 #[derive(Debug, Clone)]
@@ -78,16 +84,16 @@ impl Broadcast {
         let mut recv_task = tokio::spawn(async move {
             while let Some(Ok(Message::Text(msg))) = client_receiver.next().await {
                 match msg.to_lowercase().as_str() {
-                    BroadcastCommands::HardWrap => {
-                        let _ = transmitter.send(msg.to_string());
-                    }
-                    BroadcastCommands::Wrap => {
-                        let _ = transmitter.send(msg.to_string());
-                    }
-                    BroadcastCommands::ThitySeconds => {
-                        let _ = transmitter.send(msg.to_string());
-                    }
-                    BroadcastCommands::OneMinute => {
+                    BroadcastCommands::Scroll
+                    | BroadcastCommands::ScrollSpeed1
+                    | BroadcastCommands::ScrollSpeed2
+                    | BroadcastCommands::ScrollSpeed3
+                    | BroadcastCommands::ScrollSpeed4
+                    | BroadcastCommands::ScrollSpeed5
+                    | BroadcastCommands::OneMinute
+                    | BroadcastCommands::ThirtySeconds
+                    | BroadcastCommands::Wrap
+                    | BroadcastCommands::HardWrap => {
                         let _ = transmitter.send(msg.to_string());
                     }
                     BroadcastCommands::End => break,
