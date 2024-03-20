@@ -19,6 +19,7 @@ mod BroadcastCommands {
     pub const ThirtySeconds: &str = "timing:thirty_seconds";
     pub const Wrap: &str = "timing:wrap";
     pub const HardWrap: &str = "timing:hard_wrap";
+    pub const ResetTiming: &str = "timing:reset";
     pub const End: &str = "state:end";
 }
 
@@ -93,7 +94,8 @@ impl Broadcast {
                     | BroadcastCommands::OneMinute
                     | BroadcastCommands::ThirtySeconds
                     | BroadcastCommands::Wrap
-                    | BroadcastCommands::HardWrap => {
+                    | BroadcastCommands::HardWrap
+                    | BroadcastCommands::ResetTiming => {
                         let _ = transmitter.send(msg.to_string());
                     }
                     BroadcastCommands::End => break,
