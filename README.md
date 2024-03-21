@@ -1,4 +1,4 @@
-# LiveScript
+# LiveScript Server
 
 LiveScript is an app to remotely view or control a prompter from any device. Up to 10 users can view a broadcast at once. This app is great for news reporters in the field or podcast producers.
 
