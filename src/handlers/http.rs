@@ -1,54 +1,10 @@
-use std::{net::SocketAddr, sync::Arc};
+use std::sync::Arc;
 
-use axum::{
-    extract::{ConnectInfo, State, WebSocketUpgrade},
-    http::StatusCode,
-    response::IntoResponse,
-    Json,
-};
-use axum_extra::TypedHeader;
-use tower_cookies::{cookie::time::Duration, cookie::SameSite, Cookie, Cookies};
+use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
+use tower_cookies::{cookie::{time::Duration, SameSite}, Cookie, Cookies};
 
-use crate::types::{
-    ApplicationState, Auth, AuthResponse, Broadcast, JwtManager, UserAccessRequest,
-    UserRegistrationRequest,
-};
+use crate::{types::{Auth, AuthResponse, JwtManager, UserAccessRequest, UserRegistrationRequest}, ApplicationState};
 
-/* ---------- HELPERS ---------- */
-
-fn log_user_agent(user_agent: Option<TypedHeader<headers::UserAgent>>, addr: SocketAddr) {
-    let user_agent = if let Some(TypedHeader(user_agent)) = user_agent {
-        user_agent.to_string()
-    } else {
-        String::from("Unknown browser")
-    };
-
-    println!("`{user_agent}` at {addr} connected.");
-}
-
-/* ---------- WEBSOCKET HANDLERS ---------- */
-
-pub async fn init_broadcast(
-    ws: WebSocketUpgrade,
-    user_agent: Option<TypedHeader<headers::UserAgent>>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    State(state): State<Arc<ApplicationState>>,
-) -> impl IntoResponse {
-    log_user_agent(user_agent, addr);
-    ws.on_upgrade(move |socket| Broadcast::init(socket, addr, state))
-}
-
-pub async fn subscribe_to_broadcast(
-    ws: WebSocketUpgrade,
-    user_agent: Option<TypedHeader<headers::UserAgent>>,
-    ConnectInfo(addr): ConnectInfo<SocketAddr>,
-    State(state): State<Arc<ApplicationState>>,
-) -> impl IntoResponse {
-    log_user_agent(user_agent, addr);
-    ws.on_upgrade(move |socket| Broadcast::subscribe(socket, addr, state))
-}
-
-/* ---------- HTTP HANDLERS ---------- */
 pub async fn register_user(
     cookies: Cookies,
     State(state): State<Arc<ApplicationState>>,

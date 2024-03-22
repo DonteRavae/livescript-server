@@ -3,7 +3,7 @@ use std::{collections::HashMap, sync::Arc};
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
-use super::{broadcast::Broadcast, db::DbController};
+use super::{Broadcast, DbController};
 
 #[derive(Debug)]
 pub struct ApplicationState {
